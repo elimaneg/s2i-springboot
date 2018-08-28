@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+APP_TARGET=${APP_TARGET:-target}
+echo "---> Starting Spring Boot application"
+echo "--> APP_TARGET = $APP_TARGET"
+echo "--> JAVA_OPTS  = $JAVA_OPTS"
+echo "--> APP_OPTS   = $APP_OPTS"
+java $JAVA_OPTS -jar /opt/app-root/app.jar $APP_OPTS
+#java $JAVA_OPTS -jar `find $APP_TARGET -maxdepth 1 -regex ".*\(jar\|war\)"`

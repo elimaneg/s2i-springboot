@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -e
+
+# If the 'lighttpd-centos7' assemble script is executed with the '-h' flag, print the usage.
+if [[ "$1" == "-h" ]]; then
+        exec /usr/libexec/s2i/usage
+fi
+
+# Restore artifacts from the previous build (if they exist).
+#
+if [ -d /tmp/artifacts/.m2 ]; then
+  echo "---> Restoring build artifacts..."
+  mv /tmp/artifacts/.m2 "$HOME"/
+fi
+
+echo "---> Installing application source"
+cp -Rf /tmp/src/. ./
+
+echo "MAVEN_CONFIG = $MAVEN_CONFIG"
+echo "MAVEN_GOALS = $MAVEN_GOALS"
+echo "MAVEN_OPTS = $MAVEN_OPTS"
+echo "---> Building Spring Boot application from source"
+if [ -f "mvnw" ]; then
+  ./mvnw clean install $MVN_OPTS
+else
+  #echo mvn clean install $MVN_ARGS
+  if [ "$MAVEN_CONFIG" != "" ] ; then 
+    export MAVEN_CONFIG="$MAVEN_CONFIG"
+  fi
+  env
+  mvn ${MAVEN_GOALS:-clean package} -DskipTests=${MAVEN_SKIP_TESTS:-true} -Dmaven.skip.tests=${MAVEN_SKIP_TESTS:-true} ${MAVEN_OPTS}
+fi
+
+#echo "---> Copying built application to app-root..."
+## TODO this may fail if there are more than one jar generated
+# cp -a /opt/app-root/src/target/*.jar /opt/app-root/app.jar
+APP=$(ls ./target/*.jar)
+# make more checks to validate single fat jar is there...
+echo "Copying $APP to /opt/app-root/"
+rm -f /opt/app-root/app.jar
+cp -a $APP /opt/app-root/app.jar
+# Fix source directory permissions
+fix-permissions ./
